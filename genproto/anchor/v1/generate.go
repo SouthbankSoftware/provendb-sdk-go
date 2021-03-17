@@ -19,4 +19,4 @@
 
 package anchor
 
-//go:generate protoc -I / $API_ANCHOR_PROTO --go_out=:. --go-grpc_out=.
+//go:generate protoc -I / $API_ANCHOR_PROTO --go_out=:$GOPATH/src --go-grpc_out=:$GOPATH/src
