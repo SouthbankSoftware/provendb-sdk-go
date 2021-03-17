@@ -19,4 +19,4 @@
 
 package anchor
 
-//go:generate protoc --plugin=protoc-gen-doc=../protoc-gen-doc --doc_out=../markdown.tmpl,anchor_service.md:../../../docs/grpc --go_out=paths=source_relative,plugins=grpc:../ -I ../ anchor/anchor.proto
+//go:generate protoc -I / $API_ANCHOR_PROTO --go_out=:. --go-grpc_out=.
