@@ -19,4 +19,4 @@
 
 package anchor
 
-//go:generate protoc -I / $API_ANCHOR_PROTO --go_out=:$GOPATH/src --go-grpc_out=:$GOPATH/src
+//go:generate protoc -I $GOPATH/src github.com/SouthbankSoftware/provendb-apis/anchor/v1/anchor.proto --go_out=:$GOPATH/src --go-grpc_out=:$GOPATH/src

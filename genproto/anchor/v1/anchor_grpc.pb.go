@@ -384,5 +384,5 @@ var AnchorService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "Users/steven/Development/git/github.com/SouthbankSoftware/provendb-apis/anchor/v1/anchor.proto",
+	Metadata: "github.com/SouthbankSoftware/provendb-apis/anchor/v1/anchor.proto",
 }
