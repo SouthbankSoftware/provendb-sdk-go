@@ -1,69 +1,76 @@
 package anchor
 
-import (
-	"context"
+import "github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor/v1"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor/v1"
-	"google.golang.org/grpc"
+const (
+	BitcoinMainnet  AnchorType = 1
+	BitcoinTestnet  AnchorType = 2
+	EthereumMainnet AnchorType = 3
+	EthereumTestnet AnchorType = 4
+	Hyperledger     AnchorType = 5
 )
 
-// import "github.com/SouthbankSoftware/proofable/pkg/protos/anchor"
+const (
+	ChainpointFormat ProofFormat = 1
+)
 
-// ProofHandle represents a handle on a single proof.
-type ProofHandle struct {
-	proof         *anchor.Proof
-	err           error  // any errors
-	serverAddress string // the anchor server address
-	token         string // the auth token
+// Type represents a single anchor type.
+type AnchorType int
+
+type ProofFormat int
+
+// ProtoType returns the proto type of this anchor type.
+func (t AnchorType) ProtoType() anchor.Anchor_Type {
+	switch t {
+	case BitcoinMainnet:
+		return anchor.Anchor_BTC_MAINNET
+	case BitcoinTestnet:
+		return anchor.Anchor_BTC
+	case EthereumMainnet:
+		return anchor.Anchor_ETH_MAINNET
+	case EthereumTestnet:
+		return anchor.Anchor_ETH
+	case Hyperledger:
+		return anchor.Anchor_HYPERLEDGER
+	default:
+		panic("type not defined")
+	}
 }
 
-// Proof wraps the proto.Proof from anchor service struct and provides some extra functionality.
+// ProtoType returns the proto type of this format.
+func (f ProofFormat) ProtoType() anchor.Proof_Format {
+	switch f {
+	case ChainpointFormat:
+		return anchor.Proof_CHP_PATH
+	default:
+		panic("format not defined")
+	}
+}
+
+// Proof struct.
 type Proof struct {
-	AnchorType string      `json:"anchorType"`
-	Format     string      `json:"format"`
-	Metadata   interface{} `json:"metadata"`
-	Proof      interface{} `json:"proof"`
+	// The anchor type used to anchor the proof.
+	AnchorType AnchorType `json:"anchor_type"`
+	// Metadata is any proof related metadata including transaction information, prices, etc.
+	AnchorData interface{} `json:"metadata"`
+	// BatchID
+	BatchID string `json:"batch_id"`
+	// The format the proof is in.
+	Format ProofFormat `json:"format"`
+	// The submitted hash for this proof.
+	Hash string
+	// Status is the proof status.
+	Status string `json:"status"`
+	// Proof is the actual proof of the submitted hash.
+	Proof interface{} `json:"proof"`
 }
 
-// MarshalJSON implements the json.Encoder interface.
-func (p *Proof) MarshalJSON() ([]byte, error) {
-	return nil, nil
+// BitcoinMetadata contains metadata related to the anchoring on the Bitcoin blockchains.
+type BitcoinMetadata struct {
+	TransactionID string `json:"transaction_id"`
 }
 
-// UnmarshalJSON implements the json.Decoder interface.
-func (p *Proof) UnmarshalJSON(data []byte) error {
-	return nil
-}
-
-// DecodeProof will decode the base64 encoded proof data.
-func (p *Proof) DecodeProof() (b []byte, e error) {
-	return
-}
-
-// NewProofHandle creates a new proof handle.
-func NewProofHandle(proof *anchor.Proof) *ProofHandle {
-	return &ProofHandle{proof: proof}
-}
-
-// Error returns the current error status, or nil if no error.
-func (h *ProofHandle) Error() error {
-	return h.err
-}
-
-// Update polls the anchor service and retrieves the current proof.
-func (h *ProofHandle) Update(ctx context.Context) (*anchor.Proof, error) {
-	conn, err := grpc.Dial(h.serverAddress)
-	if err != nil {
-		return nil, err
-	}
-	client := anchor.NewAnchorServiceClient(conn)
-	h.proof, h.err = client.GetProof(ctx, &anchor.ProofRequest{
-		Hash:      h.proof.Hash,
-		BatchId:   h.proof.BatchId,
-		WithBatch: true,
-	})
-	if h.err != nil {
-		return nil, err
-	}
-	return h.proof, nil
+// EthereumMetadata contains metadata related to anchoring on the Ethereum blockchains.
+type EthereumMetadata struct {
+	GasPrice string `json:"gas_price"`
 }

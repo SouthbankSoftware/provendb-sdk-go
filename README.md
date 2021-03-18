@@ -30,8 +30,3 @@ The **anchor** package provides a client for our Anchor API Service.
 
 The **merkle** package provides a library for you to construct your own Merkle Tree. Once constructed, you
 can use the root hash of the tree and submit it to the [anchor](#anchor) service.
-
-
-| Package | Description | Import |
-| :------ | :---------- | :----- |
-| [anchor](./pkg/anchor) | The Anchor service client. | `import "github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor/v1"` |
