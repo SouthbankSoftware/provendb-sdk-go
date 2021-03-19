@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor/v1"
+	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor"
 	"google.golang.org/grpc"
 )
 

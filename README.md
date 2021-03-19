@@ -19,7 +19,7 @@ Examples are located [here](./examples).
 
 ### anchor
 
-`import "github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor/v1"`
+`import "github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"`
 
 The **anchor** package provides a client for our Anchor API Service.
 

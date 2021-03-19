@@ -3,7 +3,7 @@ package anchor
 import (
 	"context"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor/v1"
+	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor"
 )
 
 // ProofHandle represents a handle on a single proof.

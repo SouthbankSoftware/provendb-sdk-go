@@ -1,6 +1,6 @@
 package anchor
 
-import "github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor/v1"
+import "github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor"
 
 const (
 	BitcoinMainnet  AnchorType = 1

@@ -44,7 +44,7 @@ func NewAnchorServiceClient(cc grpc.ClientConnInterface) AnchorServiceClient {
 }
 
 func (c *anchorServiceClient) GetAnchors(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (AnchorService_GetAnchorsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &AnchorService_ServiceDesc.Streams[0], "/provendb.anchor.v1.AnchorService/GetAnchors", opts...)
+	stream, err := c.cc.NewStream(ctx, &AnchorService_ServiceDesc.Streams[0], "/provendb.anchor.AnchorService/GetAnchors", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (x *anchorServiceGetAnchorsClient) Recv() (*Anchor, error) {
 
 func (c *anchorServiceClient) GetAnchor(ctx context.Context, in *AnchorRequest, opts ...grpc.CallOption) (*Anchor, error) {
 	out := new(Anchor)
-	err := c.cc.Invoke(ctx, "/provendb.anchor.v1.AnchorService/GetAnchor", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/provendb.anchor.AnchorService/GetAnchor", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *anchorServiceClient) GetAnchor(ctx context.Context, in *AnchorRequest, 
 
 func (c *anchorServiceClient) GetProof(ctx context.Context, in *ProofRequest, opts ...grpc.CallOption) (*Proof, error) {
 	out := new(Proof)
-	err := c.cc.Invoke(ctx, "/provendb.anchor.v1.AnchorService/GetProof", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/provendb.anchor.AnchorService/GetProof", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (c *anchorServiceClient) GetProof(ctx context.Context, in *ProofRequest, op
 
 func (c *anchorServiceClient) SubmitProof(ctx context.Context, in *SubmitProofRequest, opts ...grpc.CallOption) (*Proof, error) {
 	out := new(Proof)
-	err := c.cc.Invoke(ctx, "/provendb.anchor.v1.AnchorService/SubmitProof", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/provendb.anchor.AnchorService/SubmitProof", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (c *anchorServiceClient) SubmitProof(ctx context.Context, in *SubmitProofRe
 
 func (c *anchorServiceClient) VerifyProof(ctx context.Context, in *VerifyProofRequest, opts ...grpc.CallOption) (*VerifyProofReply, error) {
 	out := new(VerifyProofReply)
-	err := c.cc.Invoke(ctx, "/provendb.anchor.v1.AnchorService/VerifyProof", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/provendb.anchor.AnchorService/VerifyProof", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (c *anchorServiceClient) VerifyProof(ctx context.Context, in *VerifyProofRe
 
 func (c *anchorServiceClient) GetBatch(ctx context.Context, in *BatchRequest, opts ...grpc.CallOption) (*Batch, error) {
 	out := new(Batch)
-	err := c.cc.Invoke(ctx, "/provendb.anchor.v1.AnchorService/GetBatch", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/provendb.anchor.AnchorService/GetBatch", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (c *anchorServiceClient) GetBatch(ctx context.Context, in *BatchRequest, op
 }
 
 func (c *anchorServiceClient) SubscribeBatches(ctx context.Context, in *SubscribeBatchesRequest, opts ...grpc.CallOption) (AnchorService_SubscribeBatchesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &AnchorService_ServiceDesc.Streams[1], "/provendb.anchor.v1.AnchorService/SubscribeBatches", opts...)
+	stream, err := c.cc.NewStream(ctx, &AnchorService_ServiceDesc.Streams[1], "/provendb.anchor.AnchorService/SubscribeBatches", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func _AnchorService_GetAnchor_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/provendb.anchor.v1.AnchorService/GetAnchor",
+		FullMethod: "/provendb.anchor.AnchorService/GetAnchor",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnchorServiceServer).GetAnchor(ctx, req.(*AnchorRequest))
@@ -261,7 +261,7 @@ func _AnchorService_GetProof_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/provendb.anchor.v1.AnchorService/GetProof",
+		FullMethod: "/provendb.anchor.AnchorService/GetProof",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnchorServiceServer).GetProof(ctx, req.(*ProofRequest))
@@ -279,7 +279,7 @@ func _AnchorService_SubmitProof_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/provendb.anchor.v1.AnchorService/SubmitProof",
+		FullMethod: "/provendb.anchor.AnchorService/SubmitProof",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnchorServiceServer).SubmitProof(ctx, req.(*SubmitProofRequest))
@@ -297,7 +297,7 @@ func _AnchorService_VerifyProof_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/provendb.anchor.v1.AnchorService/VerifyProof",
+		FullMethod: "/provendb.anchor.AnchorService/VerifyProof",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnchorServiceServer).VerifyProof(ctx, req.(*VerifyProofRequest))
@@ -315,7 +315,7 @@ func _AnchorService_GetBatch_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/provendb.anchor.v1.AnchorService/GetBatch",
+		FullMethod: "/provendb.anchor.AnchorService/GetBatch",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnchorServiceServer).GetBatch(ctx, req.(*BatchRequest))
@@ -348,7 +348,7 @@ func (x *anchorServiceSubscribeBatchesServer) Send(m *Batch) error {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AnchorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "provendb.anchor.v1.AnchorService",
+	ServiceName: "provendb.anchor.AnchorService",
 	HandlerType: (*AnchorServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -384,5 +384,5 @@ var AnchorService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "github.com/SouthbankSoftware/provendb-apis/anchor/v1/anchor.proto",
+	Metadata: "github.com/SouthbankSoftware/provendb-apis/anchor/anchor.proto",
 }
