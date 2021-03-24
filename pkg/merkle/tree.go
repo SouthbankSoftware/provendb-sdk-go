@@ -1,10 +1,15 @@
 package merkle
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
+
+	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
+
+	"google.golang.org/grpc"
 )
 
 // Tree represents a single Merkle tree.
@@ -54,6 +59,11 @@ func NewTreeFromFile(path string) (*Tree, error) {
 	return tree, nil
 }
 
+// AddProof adds a proof for this tree.
+func (t *Tree) AddProof(proof interface{}) {
+	t.Proofs = append(t.Proofs, proof)
+}
+
 // CountDepth returns the depth of the tree.
 func (t *Tree) CountDepth() int {
 	return len(t.Levels) - 1
@@ -78,9 +88,94 @@ func (t *Tree) CountLevels() int {
 	return len(t.Levels)
 }
 
+type CreateProofOptions struct {
+	// The address of the anchor service.
+	Address string
+	// The anchor type to use.
+	AnchorType proto.Anchor_Type
+	// The credentials to use.
+	Credentials string
+	// The proof format.
+	Format proto.Proof_Format
+	// Enable a secure connection. Default true.
+	Secure bool
+	// SkipBatching
+	SkipBatching bool
+}
+
+type CreateProofOption func(opts *CreateProofOptions)
+
+func CreateProofWithAddress(address string) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.Address = address
+	}
+}
+
+func CreateProofWithAnchorType(anchorType proto.Anchor_Type) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.AnchorType = anchorType
+	}
+}
+
+func CreateProofWithCredentials(credentials string) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.Credentials = credentials
+	}
+}
+
+func CreateProofWithSkipBatching(skipBatching bool) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.SkipBatching = skipBatching
+	}
+}
+
+func CreateProofWithSecure(secure bool) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.Secure = secure
+	}
+}
+
+func CreateProofWithFormat(format proto.Proof_Format) CreateProofOption {
+	return func(opts *CreateProofOptions) {
+		opts.Format = format
+	}
+}
+
 // CreateProof creates a proof by submitting the root hash of this tree.
-func (t *Tree) CreateProof() {
-	return
+func (t *Tree) CreateProof(ctx context.Context, anchor *anchor.AnchorServiceClient) (*anchor.ProofHandle, error) {
+	options := &CreateProofOptions{
+		Address:      "anchor.proofable.io:443",
+		AnchorType:   anchor.Anchor_ETH,
+		Credentials:  os.Getenv("PROVENDB_ANCHOR_CREDENTIALS"),
+		Secure:       true,
+		Format:       anchor.Proof_CHP_PATH,
+		SkipBatching: false,
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	var dialOpts []grpc.DialOption
+	if !options.Secure {
+		dialOpts = append(dialOpts, grpc.WithInsecure())
+	}
+	conn, err := grpc.Dial(options.Address, dialOpts...)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	service := anchor.NewAnchorServiceClient(conn)
+
+	p, err := service.SubmitProof(ctx, &proto.SubmitProofRequest{
+		Hash:       t.Root(),
+		AnchorType: options.AnchorType,
+		Format:     options.Format,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return anchor.NewProofHandle(p, service)
 }
 
 // Export exports this tree to file.
