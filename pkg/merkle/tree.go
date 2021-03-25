@@ -1,15 +1,10 @@
 package merkle
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
-
-	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
-
-	"google.golang.org/grpc"
 )
 
 // Tree represents a single Merkle tree.
@@ -19,7 +14,7 @@ type Tree struct {
 	// Algorithm used to perform tree hashing functions.
 	Algorithm Hash `json:"algorithm"`
 	// An array of proofs submitted for this tree.
-	Proofs []interface{} `json:"proofs"`
+	Proofs []Proof `json:"proofs"`
 	// The two-dimensional array of tree data, starting from the leaves (tree[0]) all the way
 	// to the root (tree[tree.length - 1])
 	Levels [][]string `json:"levels"`
@@ -31,10 +26,17 @@ type Path struct {
 	R string `json:"r,omitempty"` // the right leaf
 }
 
+type Proof interface {
+	// Metadata provides information about the anchoring.
+	Metadata() interface{}
+	// Data is the actual receipt.
+	Data() interface{}
+}
+
 // NewTree creates a new Merkle Tree.
-func NewTree(algorithm Hash, proofs []interface{}, levels [][]string) *Tree {
+func NewTree(algorithm Hash, proofs []Proof, levels [][]string) *Tree {
 	if proofs == nil {
-		proofs = make([]interface{}, 0)
+		proofs = make([]Proof, 0)
 	}
 	if levels == nil {
 		levels = make([][]string, 0)
@@ -60,7 +62,8 @@ func NewTreeFromFile(path string) (*Tree, error) {
 }
 
 // AddProof adds a proof for this tree.
-func (t *Tree) AddProof(proof interface{}) {
+func (t *Tree) AddProof(proof Proof) {
+
 	t.Proofs = append(t.Proofs, proof)
 }
 
@@ -88,95 +91,95 @@ func (t *Tree) CountLevels() int {
 	return len(t.Levels)
 }
 
-type CreateProofOptions struct {
-	// The address of the anchor service.
-	Address string
-	// The anchor type to use.
-	AnchorType proto.Anchor_Type
-	// The credentials to use.
-	Credentials string
-	// The proof format.
-	Format proto.Proof_Format
-	// Enable a secure connection. Default true.
-	Secure bool
-	// SkipBatching
-	SkipBatching bool
-}
+// type CreateProofOptions struct {
+// 	// The address of the anchor service.
+// 	Address string
+// 	// The anchor type to use.
+// 	AnchorType anchor.Anchor_Type
+// 	// The credentials to use.
+// 	Credentials string
+// 	// The proof format.
+// 	Format anchor.Proof_Format
+// 	// Enable a secure connection. Default true.
+// 	Secure bool
+// 	// SkipBatching
+// 	SkipBatching bool
+// }
 
-type CreateProofOption func(opts *CreateProofOptions)
+// type CreateProofOption func(opts *CreateProofOptions)
 
-func CreateProofWithAddress(address string) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.Address = address
-	}
-}
+// func CreateProofWithAddress(address string) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.Address = address
+// 	}
+// }
 
-func CreateProofWithAnchorType(anchorType proto.Anchor_Type) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.AnchorType = anchorType
-	}
-}
+// func CreateProofWithAnchorType(anchorType proto.Anchor_Type) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.AnchorType = anchorType
+// 	}
+// }
 
-func CreateProofWithCredentials(credentials string) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.Credentials = credentials
-	}
-}
+// func CreateProofWithCredentials(credentials string) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.Credentials = credentials
+// 	}
+// }
 
-func CreateProofWithSkipBatching(skipBatching bool) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.SkipBatching = skipBatching
-	}
-}
+// func CreateProofWithSkipBatching(skipBatching bool) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.SkipBatching = skipBatching
+// 	}
+// }
 
-func CreateProofWithSecure(secure bool) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.Secure = secure
-	}
-}
+// func CreateProofWithSecure(secure bool) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.Secure = secure
+// 	}
+// }
 
-func CreateProofWithFormat(format proto.Proof_Format) CreateProofOption {
-	return func(opts *CreateProofOptions) {
-		opts.Format = format
-	}
-}
+// func CreateProofWithFormat(format proto.Proof_Format) CreateProofOption {
+// 	return func(opts *CreateProofOptions) {
+// 		opts.Format = format
+// 	}
+// }
 
-// CreateProof creates a proof by submitting the root hash of this tree.
-func (t *Tree) CreateProof(ctx context.Context, anchor *anchor.AnchorServiceClient) (*anchor.ProofHandle, error) {
-	options := &CreateProofOptions{
-		Address:      "anchor.proofable.io:443",
-		AnchorType:   anchor.Anchor_ETH,
-		Credentials:  os.Getenv("PROVENDB_ANCHOR_CREDENTIALS"),
-		Secure:       true,
-		Format:       anchor.Proof_CHP_PATH,
-		SkipBatching: false,
-	}
+// // CreateProof creates a proof by submitting the root hash of this tree.
+// func (t *Tree) CreateProof(ctx context.Context, anchor *anchor.AnchorServiceClient, opts ...CreateProofOptions) (*anchor.ProofHandle, error) {
+// 	options := &CreateProofOptions{
+// 		Address:      "anchor.proofable.io:443",
+// 		AnchorType:   anchor.Anchor_ETH,
+// 		Credentials:  os.Getenv("PROVENDB_ANCHOR_CREDENTIALS"),
+// 		Secure:       true,
+// 		Format:       anchor.Proof_CHP_PATH,
+// 		SkipBatching: false,
+// 	}
 
-	for _, opt := range opts {
-		opt(options)
-	}
+// 	for _, opt := range opts {
+// 		opt(options)
+// 	}
 
-	var dialOpts []grpc.DialOption
-	if !options.Secure {
-		dialOpts = append(dialOpts, grpc.WithInsecure())
-	}
-	conn, err := grpc.Dial(options.Address, dialOpts...)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	service := anchor.NewAnchorServiceClient(conn)
+// 	var dialOpts []grpc.DialOption
+// 	if !options.Secure {
+// 		dialOpts = append(dialOpts, grpc.WithInsecure())
+// 	}
+// 	conn, err := grpc.Dial(options.Address, dialOpts...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer conn.Close()
+// 	service := anchor.NewAnchorServiceClient(conn)
 
-	p, err := service.SubmitProof(ctx, &proto.SubmitProofRequest{
-		Hash:       t.Root(),
-		AnchorType: options.AnchorType,
-		Format:     options.Format,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return anchor.NewProofHandle(p, service)
-}
+// 	p, err := service.SubmitProof(ctx, &anchor.SubmitProofRequest{
+// 		Hash:       t.Root(),
+// 		AnchorType: options.AnchorType,
+// 		Format:     options.Format,
+// 	})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return anchor.NewProofHandle(p, service)
+// }
 
 // Export exports this tree to file.
 func (t *Tree) Export(path string) error {

@@ -2,15 +2,17 @@ package anchor
 
 import (
 	context "context"
+	"io"
 	"os"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/genproto/anchor"
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 )
 
-// Client represents an anchor service client.
+// Client holds the grpc anchor service client and provides simplified functionality to
+// perform anchor operations.
 type Client struct {
-	service anchor.AnchorServiceClient
+	conn   *grpc.ClientConn
+	anchor AnchorServiceClient
 }
 
 // ClientOptions represents the anchor options.
@@ -19,8 +21,8 @@ type ClientOptions struct {
 	Address string
 	// The credential for authentication.
 	Credentials string
-	// Establishes a secure connection.
-	Secure bool
+	// Establishes an insecure connection.
+	Insecure bool
 }
 
 // ClientOption func.
@@ -38,25 +40,25 @@ func WithCredentials(credentials string) ClientOption {
 	}
 }
 
-func WithSecure(secure bool) ClientOption {
+func WithInsecure(insecure bool) ClientOption {
 	return func(o *ClientOptions) {
-		o.Secure = secure
+		o.Insecure = insecure
 	}
 }
 
-// NewClient creates a new anchor client.
-func NewClient(opts ...ClientOption) (*Client, error) {
+// Connect creates a new anchor client and performs all the grpc connections.
+func Connect(opts ...ClientOption) (*Client, error) {
 	const (
 		defaultAddress    = "anchor.proofable.io:443"
-		defaultSecure     = true
-		defaultAnchorType = anchor.Anchor_ETH
+		defaultInsecure   = false
+		defaultAnchorType = Anchor_ETH
 	)
 	// Default credentials is lookup from environment.
 	credential := os.Getenv("PROVENDB_ANCHOR_CREDENTIALS")
 	o := &ClientOptions{
 		Address:     defaultAddress,
 		Credentials: credential,
-		Secure:      defaultSecure,
+		Insecure:    defaultInsecure,
 	}
 
 	for _, opt := range opts {
@@ -64,40 +66,66 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 	}
 	var dialOpts []grpc.DialOption
 	if o.Credentials != "" {
-		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(NewServiceCredentials(o.Credentials, o.Secure)))
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(NewServiceCredentials(o.Credentials, !o.Insecure)))
 	}
-	if !o.Secure {
+	if o.Insecure {
 		dialOpts = append(dialOpts, grpc.WithInsecure())
 	}
 	conn, err := grpc.Dial(o.Address, dialOpts...)
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
-	service := anchor.NewAnchorServiceClient(conn)
+	service := NewAnchorServiceClient(conn)
 	return &Client{
-		service: service,
+		conn:   conn,
+		anchor: service,
 	}, nil
 }
 
+// Close the anchor connection gracefully.
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
 // GetAnchors will retrieve all the available anchors.
-func (c *Client) GetAnchors() ([]anchor.Anchor, error) {
-	return nil, nil
+func (c *Client) GetAnchors(ctx context.Context) ([]*Anchor, error) {
+	res, err := c.anchor.GetAnchors(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	anchors := make([]*Anchor, 0)
+	for {
+		a, err := res.Recv()
+		if err == io.EOF {
+			return anchors, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		anchors = append(anchors, a)
+	}
+	return anchors, nil
 }
 
 // GetAnchor will retreive information about a single anchor.
-func (c *Client) GetAnchor(t anchor.Anchor_Type) (*anchor.Anchor, error) {
+func (c *Client) GetAnchor(ctx context.Context, anchorType Anchor_Type) (*Anchor, error) {
+	return c.anchor.GetAnchor(ctx, &AnchorRequest{
+		Type: anchorType,
+	})
 	return nil, nil
 }
 
 // GetBatch retrieves a single batch information.
-func (c *Client) GetBatch(ctx context.Context, id string, anchorType anchor.Anchor_Type) (*anchor.Batch, error) {
-	return nil, nil
+func (c *Client) GetBatch(ctx context.Context, batchId string, anchorType Anchor_Type) (*Batch, error) {
+	return c.anchor.GetBatch(ctx, &BatchRequest{
+		BatchId:    batchId,
+		AnchorType: anchorType,
+	})
 }
 
 // GetProof retrieves a proof matching the given hash and batch ID.
-func (c *Client) GetProof(ctx context.Context, hash string, batchId string) (*anchor.Proof, error) {
-	res, err := c.service.GetProof(ctx, &anchor.ProofRequest{
+func (c *Client) GetProof(ctx context.Context, hash string, batchId string) (*Proof, error) {
+	res, err := c.anchor.GetProof(ctx, &ProofRequest{
 		Hash:      hash,
 		BatchId:   batchId,
 		WithBatch: true,
@@ -111,16 +139,16 @@ func (c *Client) GetProof(ctx context.Context, hash string, batchId string) (*an
 // SubmitProofOptions options.
 type SubmitProofOptions struct {
 	// The anchor type.
-	AnchorType anchor.Anchor_Type
+	AnchorType Anchor_Type
 	// Whether to skip batching.
 	SkipBatching bool
 	// Format
-	Format anchor.Proof_Format
+	Format Proof_Format
 }
 
 type SubmitProofOption func(o *SubmitProofOptions)
 
-func SubmitProofWithAnchorType(anchorType anchor.Anchor_Type) SubmitProofOption {
+func SubmitProofWithAnchorType(anchorType Anchor_Type) SubmitProofOption {
 	return func(o *SubmitProofOptions) {
 		o.AnchorType = anchorType
 	}
@@ -132,42 +160,86 @@ func SubmitProofWithSkipBatching(skip bool) SubmitProofOption {
 	}
 }
 
-func SubmitProofWithFormat(format anchor.Proof_Format) SubmitProofOption {
+func SubmitProofWithFormat(format Proof_Format) SubmitProofOption {
 	return func(o *SubmitProofOptions) {
 		o.Format = format
 	}
 }
 
 // SubmitProof submits a new proof to the anchor service.
-func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (*anchor.Proof, error) {
-	// Prepare the options
+func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (*Proof, error) {
+	// Set default options
 	o := &SubmitProofOptions{
-		AnchorType:   anchor.Anchor_ETH,
+		AnchorType:   Anchor_ETH,
 		SkipBatching: false,
-		Format:       anchor.Proof_CHP_PATH,
+		Format:       Proof_CHP_PATH,
 	}
 	for _, opt := range opts {
 		opt(o)
 	}
 	// Submit the request
-	req := &anchor.SubmitProofRequest{
+	req := &SubmitProofRequest{
 		Hash:         hash,
 		AnchorType:   o.AnchorType,
 		SkipBatching: o.SkipBatching,
 		Format:       o.Format,
 	}
-	res, err := c.service.SubmitProof(ctx, req)
+	res, err := c.anchor.SubmitProof(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (c *Client) SubscribeBatch(ctx context.Context, batchId string, anchorType anchor.Anchor_Type) (anchor.AnchorService_SubscribeBatchesClient, error) {
-	return c.service.SubscribeBatches(ctx, &anchor.SubscribeBatchesRequest{
-		Filter: &anchor.BatchRequest{
+func (c *Client) SubscribeBatch(ctx context.Context, batchId string, anchorType Anchor_Type, callback func(batch *Batch, err error)) {
+	c.anchor.SubscribeBatches(ctx, &SubscribeBatchesRequest{
+		Filter: &BatchRequest{
 			BatchId:    batchId,
 			AnchorType: anchorType,
 		},
 	})
+}
+
+func (c *Client) SubscribeBatches(ctx context.Context, callback func(batch *Batch, err error)) {
+	// TODO
+	return
+}
+
+// Subsribe proof will listen for changes to the proof and return either the updated proof, or an error.
+// Function will complete once proof status returned is either CONFIRMED or ERROR, or context expired.
+func (c *Client) SubscribeProof(ctx context.Context, p *Proof, callback func(proof *Proof, err error)) {
+	// TODO check context expiration
+	res, err := c.anchor.SubscribeBatches(ctx, &SubscribeBatchesRequest{
+		Filter: &BatchRequest{
+			BatchId:    p.BatchId,
+			AnchorType: p.AnchorType,
+		},
+	})
+	if err != nil {
+		callback(nil, err)
+	}
+	go func() {
+		for {
+			b, err := res.Recv()
+			if err == io.EOF {
+				return
+			}
+			if err != nil {
+				callback(nil, err)
+				return
+			}
+			if p.BatchStatus != b.Status {
+				proof, err := c.GetProof(ctx, p.Hash, p.BatchId)
+				if err != nil {
+					callback(nil, err)
+					return
+				}
+				callback(proof, nil)
+				// Complete func if completed or error
+				if proof.Batch.Status == Batch_CONFIRMED || proof.Batch.Status == Batch_ERROR {
+					return
+				}
+			}
+		}
+	}()
 }
