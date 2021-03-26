@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/golang/protobuf v1.5.1 // indirect
+	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
 	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
 	golang.org/x/text v0.3.5 // indirect

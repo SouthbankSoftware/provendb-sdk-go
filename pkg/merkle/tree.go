@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+
+	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
 )
 
 // Tree represents a single Merkle tree.
@@ -24,13 +26,6 @@ type Tree struct {
 type Path struct {
 	L string `json:"l,omitempty"` // the left leaf
 	R string `json:"r,omitempty"` // the right leaf
-}
-
-type Proof interface {
-	// Metadata provides information about the anchoring.
-	Metadata() interface{}
-	// Data is the actual receipt.
-	Data() interface{}
 }
 
 // NewTree creates a new Merkle Tree.
@@ -61,10 +56,18 @@ func NewTreeFromFile(path string) (*Tree, error) {
 	return tree, nil
 }
 
-// AddProof adds a proof for this tree.
-func (t *Tree) AddProof(proof Proof) {
-
-	t.Proofs = append(t.Proofs, proof)
+// AddProof adds a proof for this tree. If the proof provided is an anchor.Proof, this library will
+// perform the necessary functions to convert it to a generic proof.
+func (t *Tree) AddProof(proof interface{}) {
+	switch proof.(type) {
+	case anchor.Proof:
+		p := proof.(anchor.Proof)
+		t.Proofs = append(t.Proofs, FromAnchorProof(&p))
+	case Proof:
+		t.Proofs = append(t.Proofs, proof.(Proof))
+	default:
+		panic("proof not recognised")
+	}
 }
 
 // CountDepth returns the depth of the tree.

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	grpc "google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Client holds the grpc anchor service client and provides simplified functionality to
@@ -89,7 +90,7 @@ func (c *Client) Close() error {
 
 // GetAnchors will retrieve all the available anchors.
 func (c *Client) GetAnchors(ctx context.Context) ([]*Anchor, error) {
-	res, err := c.anchor.GetAnchors(ctx, nil)
+	res, err := c.anchor.GetAnchors(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,6 @@ func (c *Client) GetAnchors(ctx context.Context) ([]*Anchor, error) {
 		}
 		anchors = append(anchors, a)
 	}
-	return anchors, nil
 }
 
 // GetAnchor will retreive information about a single anchor.
@@ -112,7 +112,6 @@ func (c *Client) GetAnchor(ctx context.Context, anchorType Anchor_Type) (*Anchor
 	return c.anchor.GetAnchor(ctx, &AnchorRequest{
 		Type: anchorType,
 	})
-	return nil, nil
 }
 
 // GetBatch retrieves a single batch information.
