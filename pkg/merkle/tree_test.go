@@ -4,6 +4,8 @@ import (
 	_ "crypto/sha256"
 	"reflect"
 	"testing"
+
+	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
 )
 
 // Variables for trees with 16 leaves.
@@ -169,6 +171,22 @@ func invalidate(t *testing.T, path []*Path, root string, leaf string) {
 	}
 	if ok {
 		t.Fatalf("root should have been different for '%s'", a)
+	}
+}
+
+func TestTree_Export(t *testing.T) {
+	builder := NewBuilder(SHA256)
+	builder.AddBatch(&batch16)
+	tree := builder.Build()
+	tree.AddProof(anchor.Proof{
+		Hash: "",
+		Data: "eJykkbGS0zAQQH+G1rG0K9lWqszwC1Q0nt3VGmsIlsfWBa4EGtp8w4XhYCiBkv/I3zC5wHU00D7pvZ3Z/XC/kzwVfVN+jqXM67auX2OKm7y8qGWkNM05TaU+4Knczvrl6SM6jbSO5x3IAC4y+YENoVFotEMGEs9BIahl21j1YgdqHXht0TjEBgJ2HDpwXy+ZPsV+ylHPTyIZQPFSSRd8Za2GihCGCghIIbKIuh8PynrDr1IpejV7Kt/AgK0MVuCfAW6d3Vp8/piXvPxj/mL+LX/PC00y6np893FPrPvvc+Rey9hfcF766/tdntfj209Xth7fP+zyTmj/+fe3FM+7VnCAltk2rlWN1nhpPEb0A6m6BkNk10Egb7yG0EqnTL7V0HaN+GCa082S1uP55Z8zXtObqIfNvOQ8EO91k3J90CUNt7WWsf7fkb8CAAD//5Arw98=",
+		Batch: &anchor.Batch{
+			Data: "{\"txnId\":\"0565eb2dd0c8c7e85864e937b9997b6d080f69f10cf71ad4b3113f9a707c6d7a\",\"txnUri\":\"https://rinkeby.etherscan.io/tx/0x0565eb2dd0c8c7e85864e937b9997b6d080f69f10cf71ad4b3113f9a707c6d7a\",\"blockTime\":1616716627,\"blockNumber\":8298881,\"endpoint\":\"https://rinkeby.infura.io/v3/ba25a62205f24e5bb74d4f9738910a83\",\"gasUsed\":21512,\"gasPrice\":1000000000}",
+		},
+	})
+	if err := tree.Export("testing/merkle.json"); err != nil {
+		t.Fail()
 	}
 }
 

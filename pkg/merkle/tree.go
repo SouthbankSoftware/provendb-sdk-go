@@ -186,7 +186,7 @@ func (t *Tree) CountLevels() int {
 
 // Export exports this tree to file.
 func (t *Tree) Export(path string) error {
-	file, err := os.Open(path)
+	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
 		return err
