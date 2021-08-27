@@ -234,20 +234,6 @@ func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitPro
 	return
 }
 
-func (c *Client) SubscribeBatch(ctx context.Context, batchId string, anchorType Anchor_Type, callback func(batch *Batch, err error)) {
-	c.anchor.SubscribeBatches(ctx, &SubscribeBatchesRequest{
-		Filter: &BatchRequest{
-			BatchId:    batchId,
-			AnchorType: anchorType,
-		},
-	})
-}
-
-func (c *Client) SubscribeBatches(ctx context.Context, callback func(batch *Batch, err error)) {
-	// TODO
-	return
-}
-
 // Subsribe proof will listen for changes to the proof and return either the updated proof, or an error.
 // Function will complete once proof status returned is either CONFIRMED or ERROR, or context expired.
 func (c *Client) SubscribeProof(ctx context.Context, id string, anchorType interface{}, callback func(proof *AnchorProof, err error)) {
