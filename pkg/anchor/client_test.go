@@ -62,7 +62,7 @@ func TestClient_SubmitProof(t *testing.T) {
 }
 
 func TestClient_SubmitProofWithAwaitConfirmed(t *testing.T) {
-	client, err := Connect(WithInsecure(true), WithAddress("localhost:10008"), WithCredentials("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbmNob3IiLCJleHAiOjE3Nzk4NDgyODcsImp0aSI6ImFzMmNic3U1ODluZzU2ZzZ1em11bm8zOSIsInN1YiI6InByb3h5Iiwic2NvcGUiOiIwIiwicm9sZSI6IlBhaWQifQ.yVqpF8PvHVagAuOhQPVVWHDbzpnOZe_PoiYggsbFnwI"))
+	client, err := Connect(WithInsecure(true), WithAddress("localhost:10008"))
 	if err != nil {
 		t.Fail()
 	}
