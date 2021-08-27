@@ -60,3 +60,18 @@ func TestClient_SubmitProof(t *testing.T) {
 	for !confirmed {
 	}
 }
+
+func TestClient_SubmitProofWithAwaitConfirmed(t *testing.T) {
+	client, err := Connect(WithInsecure(true), WithAddress("localhost:10008"), WithCredentials("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbmNob3IiLCJleHAiOjE3Nzk4NDgyODcsImp0aSI6ImFzMmNic3U1ODluZzU2ZzZ1em11bm8zOSIsInN1YiI6InByb3h5Iiwic2NvcGUiOiIwIiwicm9sZSI6IlBhaWQifQ.yVqpF8PvHVagAuOhQPVVWHDbzpnOZe_PoiYggsbFnwI"))
+	if err != nil {
+		t.Fail()
+	}
+	defer client.Close()
+	p, err := client.SubmitProof(context.Background(), "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f", SubmitProofWithAwaitConfirmed(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Status != Batch_CONFIRMED.String() {
+		t.Fatal("proof should have been confirmed")
+	}
+}

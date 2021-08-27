@@ -155,6 +155,8 @@ type SubmitProofOptions struct {
 	SkipBatching bool
 	// Format
 	Format Proof_Format
+
+	AwaitConfirmed bool
 }
 
 type SubmitProofOption func(o *SubmitProofOptions)
@@ -177,13 +179,20 @@ func SubmitProofWithFormat(format Proof_Format) SubmitProofOption {
 	}
 }
 
+func SubmitProofWithAwaitConfirmed(awaitConfirmed bool) SubmitProofOption {
+	return func(o *SubmitProofOptions) {
+		o.AwaitConfirmed = awaitConfirmed
+	}
+}
+
 // SubmitProof submits a new proof to the anchor service.
-func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (*AnchorProof, error) {
+func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (p *AnchorProof, e error) {
 	// Set default options
 	o := &SubmitProofOptions{
-		AnchorType:   Anchor_ETH,
-		SkipBatching: false,
-		Format:       Proof_CHP_PATH,
+		AnchorType:     Anchor_ETH,
+		SkipBatching:   false,
+		Format:         Proof_CHP_PATH,
+		AwaitConfirmed: false,
 	}
 	for _, opt := range opts {
 		opt(o)
@@ -199,11 +208,30 @@ func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitPro
 	if err != nil {
 		return nil, err
 	}
-	p := &AnchorProof{}
+	p = &AnchorProof{}
 	if e := p.FromProof(res); e != nil {
 		return nil, e
 	}
-	return p, nil
+	// If await confirmed, subscribe
+	done := false
+	if o.AwaitConfirmed {
+		c.SubscribeProof(ctx, p.Id, p.AnchorType, func(proof *AnchorProof, err error) {
+			if err != nil {
+				e = err
+				done = true
+				return
+			} else {
+				if proof.Status == Batch_CONFIRMED.String() {
+					p = proof
+					done = true
+					return
+				}
+			}
+		})
+		for !done {
+		}
+	}
+	return
 }
 
 func (c *Client) SubscribeBatch(ctx context.Context, batchId string, anchorType Anchor_Type, callback func(batch *Batch, err error)) {
