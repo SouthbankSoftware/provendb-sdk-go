@@ -37,28 +37,26 @@ func TestClient_SubmitProof(t *testing.T) {
 	defer client.Close()
 	p, err := client.SubmitProof(context.Background(), "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f")
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
-	if p.Format != Proof_CHP_PATH {
+	if p.Format != Proof_CHP_PATH.String() {
 		t.Fatal("wrong default format")
 	}
-	if p.AnchorType != Anchor_ETH {
+	if p.AnchorType != Anchor_ETH.String() {
 		t.Fatal("wrong default anchor type")
 	}
 	confirmed := false
-	callback := func(p *Proof, err error) {
+	callback := func(p *AnchorProof, err error) {
 		if err != nil {
-			t.FailNow()
+			t.Fatal(err)
+			return
 		}
-		if p.BatchStatus == Batch_ERROR {
-			t.FailNow()
-		}
-		if p.BatchStatus == Batch_CONFIRMED {
+		if p.Status == Batch_CONFIRMED.String() {
 			confirmed = true
 			return
 		}
 	}
-	client.SubscribeProof(context.Background(), p, callback)
+	client.SubscribeProof(context.Background(), p.Id, p.AnchorType, callback)
 	for !confirmed {
 	}
 }

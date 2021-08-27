@@ -2,8 +2,10 @@ package anchor
 
 import (
 	context "context"
+	"errors"
 	"io"
 	"os"
+	"strings"
 
 	grpc "google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -52,7 +54,7 @@ func Connect(opts ...ClientOption) (*Client, error) {
 	const (
 		defaultAddress    = "anchor.proofable.io:443"
 		defaultInsecure   = false
-		defaultAnchorType = Anchor_ETH
+		defaultAnchorType = Anchor_HEDERA_MAINNET
 	)
 	// Default credentials is lookup from environment.
 	credential := os.Getenv("PROVENDB_ANCHOR_CREDENTIALS")
@@ -123,16 +125,26 @@ func (c *Client) GetBatch(ctx context.Context, batchId string, anchorType Anchor
 }
 
 // GetProof retrieves a proof matching the given hash and batch ID.
-func (c *Client) GetProof(ctx context.Context, hash string, batchId string) (*Proof, error) {
+func (c *Client) GetProof(ctx context.Context, id string, anchorType interface{}) (*AnchorProof, error) {
+	s := strings.Split(id, ":")
+	at, err := getAnchorType(anchorType)
+	if err != nil {
+		return nil, err
+	}
 	res, err := c.anchor.GetProof(ctx, &ProofRequest{
-		Hash:      hash,
-		BatchId:   batchId,
-		WithBatch: true,
+		Hash:       s[0],
+		BatchId:    s[1],
+		AnchorType: at,
+		WithBatch:  true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	p := &AnchorProof{}
+	if e := p.FromProof(res); e != nil {
+		return nil, e
+	}
+	return p, nil
 }
 
 // SubmitProofOptions options.
@@ -166,7 +178,7 @@ func SubmitProofWithFormat(format Proof_Format) SubmitProofOption {
 }
 
 // SubmitProof submits a new proof to the anchor service.
-func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (*Proof, error) {
+func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitProofOption) (*AnchorProof, error) {
 	// Set default options
 	o := &SubmitProofOptions{
 		AnchorType:   Anchor_ETH,
@@ -187,7 +199,11 @@ func (c *Client) SubmitProof(ctx context.Context, hash string, opts ...SubmitPro
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	p := &AnchorProof{}
+	if e := p.FromProof(res); e != nil {
+		return nil, e
+	}
+	return p, nil
 }
 
 func (c *Client) SubscribeBatch(ctx context.Context, batchId string, anchorType Anchor_Type, callback func(batch *Batch, err error)) {
@@ -206,12 +222,17 @@ func (c *Client) SubscribeBatches(ctx context.Context, callback func(batch *Batc
 
 // Subsribe proof will listen for changes to the proof and return either the updated proof, or an error.
 // Function will complete once proof status returned is either CONFIRMED or ERROR, or context expired.
-func (c *Client) SubscribeProof(ctx context.Context, p *Proof, callback func(proof *Proof, err error)) {
-	// TODO check context expiration
+func (c *Client) SubscribeProof(ctx context.Context, id string, anchorType interface{}, callback func(proof *AnchorProof, err error)) {
+	s := strings.Split(id, ":")
+	at, err := getAnchorType(anchorType)
+	if err != nil {
+		callback(nil, err)
+		return
+	}
 	res, err := c.anchor.SubscribeBatches(ctx, &SubscribeBatchesRequest{
 		Filter: &BatchRequest{
-			BatchId:    p.BatchId,
-			AnchorType: p.AnchorType,
+			BatchId:    s[1],
+			AnchorType: at,
 		},
 	})
 	if err != nil {
@@ -227,17 +248,20 @@ func (c *Client) SubscribeProof(ctx context.Context, p *Proof, callback func(pro
 				callback(nil, err)
 				return
 			}
-			if p.BatchStatus != b.Status {
-				proof, err := c.GetProof(ctx, p.Hash, p.BatchId)
+			if b.Status == Batch_ERROR {
+				callback(nil, errors.New(b.Error))
+				return
+			} else {
+				// Get the updated proof
+				proof, err := c.GetProof(ctx, id, anchorType)
 				if err != nil {
 					callback(nil, err)
 					return
 				}
 				callback(proof, nil)
-				// Complete func if completed or error
-				if proof.Batch.Status == Batch_CONFIRMED || proof.Batch.Status == Batch_ERROR {
-					return
-				}
+			}
+			if b.Status == Batch_CONFIRMED {
+				return
 			}
 		}
 	}()
