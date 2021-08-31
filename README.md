@@ -1,32 +1,69 @@
 # provendb-sdk-go
+
 The ProvenDB SDK for Go.
 
-## Contents
-- [Getting Started](#getting-started)
-- [Packages](#packages)
-    - [anchor](#anchor)
-    - [merkle](#merkle)
+**NOTE**: The SDK is is in development and not recommended for production use.  For any bugs, please raise an [issue](https://github.com/SouthbankSoftware/provendb-sdk-node/issues).
 
-## Getting Started
+The use of our services requires an API key. Visit [provendb.com](https://provendb.com) to sign in/register and create one.
 
-Install the library with `go get github.com/SouthbankSoftware/provendb-sdk-go`.
+## Installation
 
-All SDK packages reside in the `pkg` directory.
+`go get github.com/SouthbankSoftware/provendb-sdk-go`
 
-Examples are located [here](./examples).
+## Libraries
 
-## Packages
+| Name | Description | Import |
+| :--- | :---------- | :----- |
+| [anchor](./anchor) | The ProvenDB Anchor client. | `import "github.com/SouthbankSoftware/provendb-sdk-go/anchor"` |
+| [merkle](./merkle) | A merkle tree library. | `import "github.com/SouthbankSoftware/provendb-sdk-go/merkle"` |
 
-### anchor
+## Examples
 
-`import "github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"`
+## Hello World!
 
-The **anchor** package provides a client for our Anchor API Service.
+This Hello, World example uses both the [anchor](./anchor) and [merkle](./merkle) libraries to generate
+a merkle tree and submit the tree's root hash to Hedera via the ProvenDB Anchor service.
 
+```go
+package main
 
-### merkle
+import (
+    "github.com/SouthbankSoftware/provendb-sdk-go/anchor"
+    "github.com/SouthbankSoftware/provendb-sdk-go/merkle"
+)
 
-`import "github.com/SouthbankSoftware/provendb-sdk-go/pkg/merkle"`
+func main() {
+    // Create the new builder and add your data.
+    builder := NewBuilder(merkle.SHA256)
+    builder.Add("key1", []byte("Hello, "))
+    builder.Add("key2", []byte("World, !"))
 
-The **merkle** package provides a library for you to construct your own Merkle Tree. Once constructed, you
-can use the root hash of the tree and submit it to the [anchor](#anchor) service.
+    // Construct the tree.
+    tree := builder.Build()
+
+    // Create a new anchor client using your credentials
+    client := anchor.Connect(anchor.WithCredentials("YOUR_API_KEY"));
+
+    // Submit your proof.
+    proof, err := client.SubmitProof(tree.GetRoot(), 
+        anchor.SubmitProofWithAnchorType(anchor.Anchor.Type.HEDERA_MAINNET), // Optional. Add your anchor type.
+        anchor.SubmitProofWithAwaitConfirmed(true)); // Optional. Return proof only when the proof is confirmed.
+
+    if err != nil {
+        // handle error
+        panic(err)
+    }
+
+    // Add your proof to the tree.
+    tree.AddProof(proof);
+
+    // Export it to file
+    tree.Export("./merkle.json");
+}
+```
+
+Congratulations, you have successfully created, anchored and exported your first `Hello, World!` proof!
+
+## Documentation
+
+Full API documentation not yet available.
