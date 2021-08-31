@@ -3,7 +3,7 @@ package merkle
 import (
 	"encoding/json"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
+	"github.com/SouthbankSoftware/provendb-sdk-go/anchor"
 )
 
 type Proof interface {

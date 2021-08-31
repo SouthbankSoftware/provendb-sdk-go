@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/SouthbankSoftware/provendb-sdk-go/pkg/anchor"
+	"github.com/SouthbankSoftware/provendb-sdk-go/anchor"
 )
 
 // File is a complete representation of a merkle tree and it's related data.
