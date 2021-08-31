@@ -34,7 +34,7 @@ import (
 
 func main() {
     // Create the new builder and add your data.
-    builder := NewBuilder(merkle.SHA256)
+    builder := merkle.NewBuilder(merkle.SHA256)
     builder.Add("key1", []byte("Hello, "))
     builder.Add("key2", []byte("World, !"))
 
