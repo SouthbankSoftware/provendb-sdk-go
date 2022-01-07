@@ -2,12 +2,14 @@ package anchor
 
 import (
 	context "context"
+	"crypto/tls"
 	"errors"
 	"io"
 	"os"
 	"strings"
 
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -73,6 +75,11 @@ func Connect(opts ...ClientOption) (*Client, error) {
 	}
 	if o.Insecure {
 		dialOpts = append(dialOpts, grpc.WithInsecure())
+	} else {
+		config := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
 	}
 	conn, err := grpc.Dial(o.Address, dialOpts...)
 	if err != nil {

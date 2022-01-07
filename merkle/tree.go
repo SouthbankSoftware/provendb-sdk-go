@@ -199,7 +199,12 @@ func (t *Tree) GetPath(key string) []*Path {
 
 // GetRoot returns the root hash of this tree.
 func (t *Tree) GetRoot() string {
-	return ((t.Layers)[len(t.Layers)-1])[0]
+	root := ((t.Layers)[len(t.Layers)-1])[0]
+	if len(t.Layers) == 1 {
+		s := strings.Split(root, ":")
+		root = s[1]
+	}
+	return root
 }
 
 // Verify recalculates the root hash of this tree and returns the whether the calculated root hash
