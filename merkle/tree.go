@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -79,6 +80,72 @@ func NewTreeFromFile(path string) (*Tree, error) {
 // AddProof adds a proof for this tree.
 func (t *Tree) AddProof(proof *anchor.AnchorProof) {
 	t.Proofs = append(t.Proofs, proof)
+}
+
+func (t *Tree) AddPathToProof(proof *anchor.AnchorProof, key string, label string) (*anchor.AnchorProof, error) {
+	switch proof.Format {
+	case "CHP_PATH":
+		return t.addPathCHP(proof, key, label)
+	case "CHP_PATH_SIGNED":
+		return t.addPathCHP(proof, key, label)
+	default:
+		return nil, fmt.Errorf("proof format '%s' not supported", proof.Format)
+	}
+}
+
+func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (*anchor.AnchorProof, error) {
+	// Check the leaf exists
+	leaf := t.GetLeaf(key)
+	if leaf == nil {
+		return nil, fmt.Errorf("no leaf found for key '%s'", key)
+	}
+
+	b, err := json.Marshal(proof.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("%s", b)
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(b, &data); err != nil {
+		return nil, err
+	}
+
+	path := t.GetPath(key)
+
+	// Build the new branches. The branches here becomes the provided proof's branches as we add new ops.
+	ops := make([]interface{}, 0)
+	branches := map[string]interface{}{
+		"label":    label,
+		"ops":      &ops,
+		"branches": data["branches"],
+	}
+
+	// Loop through each path element and create a CHP path.
+	for i := 0; i < len(path); i++ {
+		lr := make(map[string]string)
+		if path[i].L != "" {
+			lr["l"] = path[i].L
+		} else {
+			lr["r"] = path[i].R
+		}
+		ops = append(ops, lr)
+		ops = append(ops, map[string]string{"op": string(t.Algorithm)})
+	}
+
+	data["hash"] = leaf.Value
+	data["branches"] = branches
+
+	return &anchor.AnchorProof{
+		Id:         proof.Id,
+		AnchorType: proof.AnchorType,
+		Status:     proof.Status,
+		Hash:       leaf.Value,
+		Format:     proof.Format,
+		Metadata:   proof.Metadata,
+		Data:       data,
+	}, nil
 }
 
 // CountDepth returns the depth of the tree.
