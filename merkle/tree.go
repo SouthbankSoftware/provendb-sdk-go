@@ -100,18 +100,6 @@ func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (
 		return nil, fmt.Errorf("no leaf found for key '%s'", key)
 	}
 
-	b, err := json.Marshal(proof.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("%s", b)
-
-	var data map[string]interface{}
-	if err := json.Unmarshal(b, &data); err != nil {
-		return nil, err
-	}
-
 	path := t.GetPath(key)
 
 	// Build the new branches. The branches here becomes the provided proof's branches as we add new ops.
@@ -119,7 +107,7 @@ func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (
 	branches := map[string]interface{}{
 		"label":    label,
 		"ops":      &ops,
-		"branches": data["branches"],
+		"branches": proof.Data["branches"],
 	}
 
 	// Loop through each path element and create a CHP path.
@@ -134,8 +122,8 @@ func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (
 		ops = append(ops, map[string]string{"op": string(t.Algorithm)})
 	}
 
-	data["hash"] = leaf.Value
-	data["branches"] = branches
+	proof.Data["hash"] = leaf.Value
+	proof.Data["branches"] = branches
 
 	return &anchor.AnchorProof{
 		Id:         proof.Id,
@@ -144,7 +132,7 @@ func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (
 		Hash:       leaf.Value,
 		Format:     proof.Format,
 		Metadata:   proof.Metadata,
-		Data:       data,
+		Data:       proof.Data,
 	}, nil
 }
 

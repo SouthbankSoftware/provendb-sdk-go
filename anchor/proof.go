@@ -22,7 +22,7 @@ type AnchorProof struct {
 	Format     string
 	Hash       string
 	Metadata   interface{}
-	Data       interface{}
+	Data       map[string]interface{}
 }
 
 func (a *AnchorProof) FromProof(proof *Proof) error {
@@ -56,7 +56,7 @@ func (a *AnchorProof) FromProof(proof *Proof) error {
 	return nil
 }
 
-func DecodeProof(data string) (interface{}, error) {
+func DecodeProof(data string) (map[string]interface{}, error) {
 	b, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return nil, err
