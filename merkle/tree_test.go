@@ -191,6 +191,16 @@ func equal(t *testing.T, exp *[]*Path, act *[]*Path, leaf string) {
 // 	}
 // }
 
+func TestTree_GetPath(t *testing.T) {
+	builder := NewBuilder(SHA256)
+	builder.Add("a", []byte("a"))
+	builder.Add("b", []byte("b"))
+	builder.Add("c", []byte("c"))
+
+	tree := builder.Build()
+	_ = tree.GetPath("c")
+}
+
 func TestTree_Path(t *testing.T) {
 	builder := NewBuilder(SHA256)
 	builder.AddBatch(batch16)

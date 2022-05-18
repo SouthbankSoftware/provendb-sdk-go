@@ -239,6 +239,9 @@ func (t *Tree) GetPath(key string) []*Path {
 				l = strings.Split(l, ":")[1]
 			}
 			path = append(path, &Path{L: l})
+			// Check if this is an odd leaf. If so, we don't add a path because the leaf is promoted to the next level.
+		} else if index+1 == len(leaves) {
+			// Do nothing
 		} else {
 			r := (level)[index+1]
 			if strings.Contains(r, ":") {
