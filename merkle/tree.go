@@ -123,7 +123,7 @@ func (t *Tree) addPathCHP(proof *anchor.AnchorProof, key string, label string) (
 	}
 
 	proof.Data["hash"] = leaf.Value
-	proof.Data["branches"] = branches
+	proof.Data["branches"] = []map[string]interface{}{branches}
 
 	return &anchor.AnchorProof{
 		Id:         proof.Id,
