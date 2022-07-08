@@ -2,6 +2,7 @@ package merkle
 
 import (
 	_ "crypto/sha256"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -199,6 +200,54 @@ func TestTree_GetPath(t *testing.T) {
 
 	tree := builder.Build()
 	_ = tree.GetPath("c")
+}
+
+func TestTree_GetPath_odd(t *testing.T) {
+	batch := []*struct {
+		Key   string
+		Value []byte
+	}{}
+
+	for i := 0; i < 95; i++ {
+		v := string(rune(i))
+		batch = append(batch, &struct {
+			Key   string
+			Value []byte
+		}{
+			Key: v, Value: []byte(v),
+		})
+	}
+
+	builder := NewBuilder(SHA256)
+	builder.AddBatch(batch)
+
+	tree := builder.Build()
+	path := tree.GetPath("T")
+
+	fmt.Println(path)
+
+	// batch16root = abcdefghijklmnop
+
+	// batch16pathA = []*Path{
+	// 	{R: b},
+	// 	{R: cd},
+	// 	{R: efgh},
+	// 	{R: ijklmnop},
+	// }
+
+	// batch16pathB = []*Path{
+	// 	{L: a},
+	// 	{R: cd},
+	// 	{R: efgh},
+	// 	{R: ijklmnop},
+	// }
+
+	// batch16pathC = []*Path{
+	// 	{R: d},
+	// 	{L: ab},
+	// 	{R: efgh},
+	// 	{R: ijklmnop},
+	// }
 }
 
 func TestTree_Path(t *testing.T) {

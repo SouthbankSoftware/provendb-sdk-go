@@ -240,7 +240,7 @@ func (t *Tree) GetPath(key string) []*Path {
 			}
 			path = append(path, &Path{L: l})
 			// Check if this is an odd leaf. If so, we don't add a path because the leaf is promoted to the next level.
-		} else if index+1 == len(leaves) {
+		} else if index+1 == len(level) {
 			// Do nothing
 		} else {
 			r := (level)[index+1]
