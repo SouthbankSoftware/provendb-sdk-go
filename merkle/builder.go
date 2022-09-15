@@ -64,6 +64,11 @@ func (b *Builder) Add(key string, value []byte) *Builder {
 	return b.add(key, value, true)
 }
 
+// AddRaw adds data to the builder but will not hash the provided data.
+func (b *Builder) AddRaw(key string, value string) *Builder {
+	return b.add(key, []byte(value), false)
+}
+
 // AddBatch adds a batch of items to the tree.
 func (b *Builder) AddBatch(data []*struct {
 	Key   string
