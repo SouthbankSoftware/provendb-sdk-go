@@ -53,8 +53,10 @@ func (b *Builder) add(key string, value []byte, doHash bool) *Builder {
 		hasher := b.algorithm.Hash().New()
 		hasher.Write(value)
 		v = hasher.Sum(nil)
+		b.leaves = append(b.leaves, key+":"+hex.EncodeToString(v))
+	} else {
+		b.leaves = append(b.leaves, key+":"+string(v))
 	}
-	b.leaves = append(b.leaves, key+":"+hex.EncodeToString(v))
 	return b
 }
 
